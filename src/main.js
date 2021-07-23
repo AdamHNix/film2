@@ -87,7 +87,7 @@ async function findMovie(mov, object) {
     .catch(console.log("catch error"))};
 //create server for posting  responses from OMDB API
 server.post('/get-sms', (request, response) => {
-  response.clearCookie('headers');
+  //response.clearCookie('headers');
   const body = request.body.Body; //create variable for text from user
   console.log("body: ", body);
   const state = request.session.step; //track response
@@ -100,10 +100,13 @@ server.post('/get-sms', (request, response) => {
   //        var newerCacheR = newCache[5].split('=');
   //        var finalCacheR = newerCache[1];
   //        console.log("final cache request", finalCacheR);
-  if (state == 1 && body == "Y" && response.req.headers.cookie !== undefined){ 
-    if (savedBody.length != 1){
-      savedBody.shift();
-    }
+  if (state == 1 && body == "Y" && request.session.cookie !== undefined){ 
+    //if (savedBody.length != 1){
+     // savedBody.shift();
+    //}
+    console.log("In Y if, cookie", savedBody);
+    savedBody = request.session.cookie;
+    console.log("In Y if, cookie", savedBody);
     (findMovie(savedBody, movarr)).catch(console.log("catch error"))
     .then(res =>{
         request.session.step = 2; //notify that they have already gotten two responses
@@ -120,7 +123,7 @@ server.post('/get-sms', (request, response) => {
         message = message + "... It looks like this message is too long." 
       }
       message = message + " See " + res[12] + " for more info.";
-      response.clearCookie('cachedResponse');
+      //response.clearCookie('cachedResponse');
       //send to user via Twilio. Could probably turn this into function?
       const twiml = new MessagingResponse();
       twiml.message(message);
@@ -154,15 +157,20 @@ server.post('/get-sms', (request, response) => {
       phoneNum = from;
       if (res[4] == "movie") {
         request.session.step = 1;
-        savedBody = [];
-          var cachedResponse = body;
-          console.log("CachedResponse", cachedResponse);
-          response.cookie('cachedResponse', cachedResponse, { maxAge: 1000 * 60 * 60 });
-          var newCache = response.req.headers.cookie.split(';');
-          var newerCache = newCache[5].split('=');
-          var finalCache = newerCache[1];
-          console.log("final cache", finalCache);
-        savedBody.push(res[0]);//savedBody does not need to be an array
+        //savedBody = [];
+        request.session.cookie = res[0];
+        console.log("REQUEST", request);
+
+          //var cachedResponse = body;
+          //console.log("CachedResponse", cachedResponse);
+          //console.log("response: ", response);
+          //response.cookie('cachedResponse', cachedResponse, { maxAge: 1000 * 60 * 60 });
+          //console.log ("response cookie", response.req.cookie);
+          //var newCache = response.req.headers.cookie.split(';');
+          //var newerCache = newCache[5].split('=');
+          //var finalCache = newerCache[1];
+          //console.log("final cache", finalCache);
+        //savedBody.push(res[0]);//savedBody does not need to be an array
         message = ('Looks like you want some info about the movie "' + res[0] + '." Here you go! \n\n'
           + res[0] + " released in " + res[2] + ".\n\nAwards: " + res[1] + "\n\nimdb currently scores it at " + res[3] + '/10.\n\nWant to learn more? Reply "Y"');
       } else if (res[4] == "series") {
