@@ -81,6 +81,7 @@ async function findMovie(mov, object) {
 server.post('/get-sms', (request, response) => {
   //response.clearCookie('headers');
   const body = request.body.Body; //create variable for text from user
+  body.toUpperCase();
   console.log("body: ", body);
   const state = request.session.step; //track response
   var movarr = []; //used to move array from promise
@@ -89,12 +90,12 @@ server.post('/get-sms', (request, response) => {
   savedBody = request.session.movie || body;
   console.log("Saved body here!", savedBody);
   console.log("Saved State here!", state);
-  if (state == 1 && savedBody !== body){ 
+  if (state == 1 && savedBody !== body && (body == "Y" || "YES")){ 
     (findMovie(savedBody, movarr)).catch(console.log("catch error in savedBody findMovie Function"))
     .then(res =>{
         request.session.step = 2; //notify that they have already gotten two responses
         if(res[4] == "movie"){
-                  message = ("Ok! \n\n" + res[0] + " is a " + res[7] + " movie with a runtime of " + res[6] + ".\n\nDirected by " + res[8] + " and written by " + res[9] + ".\n\n Starring " + res[10] + ".\n\nplot: " + res[11]);
+                  message = ("Ok! \n\n" + res[0] + " is a " + res[7] + " film with a runtime of " + res[6] + ".\n\nDirected by " + res[8] + " and written by " + res[9] + ".\n\n Starring " + res[10] + ".\n\nplot: " + res[11]);
         }
         else if (res[4] == "series"){
           message = ("Ok! \n\n" + res[0] + " is a " + res[10] + " series that aired from " + res[2] + " to " + res[9] + ", with a total of " + res[8] + " seasons. It was written by " + res[13] + " and stars " + res[6] + ".\n\nplot: " + res[5]);
@@ -122,6 +123,7 @@ server.post('/get-sms', (request, response) => {
       //   response.set("Content-Type", 'text/xml');
       //   response.send(twiml.toString());        
       // }
+      req.session.destroy();
       return res;
     })
   }
@@ -140,12 +142,14 @@ server.post('/get-sms', (request, response) => {
       if (res[4] == "movie") {
         request.session.step = 1;
         request.session.movie = res[0];
+        console.log("Request session movie: ", request.session.movie);
         message = ('Looks like you want some info about the movie "' + res[0] + '." Here you go! \n\n'
           + res[0] + " released in " + res[2] + ".\n\nAwards: " + res[1] + "\n\nimdb currently scores it at " + res[3] + '/10.\n\nWant to learn more? Reply "Y"');
       } else if (res[4] == "series") {
         request.session.step = 1;
-        savedBody = [];
-        savedBody.push(res[0]);
+        request.session.movie = res[0];
+        //savedBody = [];
+        //savedBody.push(res[0]);
         message = ('Looks like you want some info about the series "' + res[0] + '." Here you go!\n\n '
           + res[0] + " released in " + res[2] + ".\n\n Awards: " + res[1] + "\n\nimdb currently scores it at " + res[3] + '/10. Reply "Y" for more info.');
       }
