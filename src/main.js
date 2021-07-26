@@ -17,8 +17,7 @@ const twilio = require("twilio")(
   }
 );
 
-var savedBody = []; //used to save movie responses between texts
-var overflowMessage;
+var savedBody; //used to save movie responses between texts
 
 server.use(bodyParser.urlencoded({ extended: false }));
 server.use(session(
@@ -77,7 +76,7 @@ async function findMovie(mov, object) {
       return object;
     }
     )
-    .catch(console.log("catch error"))};
+    .catch(console.log("catch error in find movie function"))};
 //create server for posting  responses from OMDB API
 server.post('/get-sms', (request, response) => {
   //response.clearCookie('headers');
@@ -87,19 +86,11 @@ server.post('/get-sms', (request, response) => {
   var movarr = []; //used to move array from promise
   //this if statement is needed when someone asks for multiple movies in one session. savedBody var will keep the old movie as well, so shifting the first item on the array off the savedBody will ensure only one item is in the array. Probably don't even need an array for this var, but don't want to deal with changing it.
   //START IF FOR Y
-  console.log("REQUEST", request);
-  console.log("RESPONSE", response);
-  console.log("COOKIE REQUEST: ", request.session.cookie);
   savedBody = request.session.movie || body;
   console.log("Saved body here!", savedBody);
   console.log("Saved State here!", state);
   if (state == 1 && savedBody !== body){ 
-    //if (savedBody.length != 1){
-     // savedBody.shift();
-    //}
-    console.log("In Y if, cookie", savedBody);
-    console.log("In Y if, cookie", savedBody);
-    (findMovie(savedBody, movarr)).catch(console.log("catch error"))
+    (findMovie(savedBody, movarr)).catch(console.log("catch error in savedBody findMovie Function"))
     .then(res =>{
         request.session.step = 2; //notify that they have already gotten two responses
         if(res[4] == "movie"){
@@ -114,7 +105,7 @@ server.post('/get-sms', (request, response) => {
         message = message.slice (0, 1500-overflowLength);
         message = message + "... It looks like this message is too long." 
       }
-      message = message + " See " + res[12] + " for more info.";
+      message = message + " See " + res[12] + " for more info.";//add link at the end of the
       //response.clearCookie('cachedResponse');
       //send to user via Twilio. Could probably turn this into function?
       const twiml = new MessagingResponse();
@@ -137,7 +128,6 @@ server.post('/get-sms', (request, response) => {
   //END IF FOR Y
   else
   {
-    console.log("starting request");
     (findMovie(body, movarr))
     .catch(err => {
       const twiml = new MessagingResponse();
@@ -147,15 +137,9 @@ server.post('/get-sms', (request, response) => {
       response.send(twiml.toString())}
     )
     .then(res => {
-      phoneNum = from;
       if (res[4] == "movie") {
         request.session.step = 1;
-        //savedBody = [];
-        console.log("cookie before change: " , request.session.cookie);
         request.session.movie = res[0];
-        //console.log("REQUEST", request);
-        console.log("cookie: ", request.session.movie);
-        console.log("cookie after change: " , request.session.cookie);
         message = ('Looks like you want some info about the movie "' + res[0] + '." Here you go! \n\n'
           + res[0] + " released in " + res[2] + ".\n\nAwards: " + res[1] + "\n\nimdb currently scores it at " + res[3] + '/10.\n\nWant to learn more? Reply "Y"');
       } else if (res[4] == "series") {
