@@ -1,15 +1,12 @@
 require("dotenv").config();
 
 const imdb = require('imdb-api');//imdb lookup API
-const cookieParser = require("cookie-parser");
 const server = require("express")();//server for twilio messages
 const session = require("express-session");//server for twilio messages
 const bodyParser = require('body-parser');
 const MessagingResponse = require("twilio").twiml.MessagingResponse;//include twiml
-var _ = require('underscore');
 const from = process.env.PHONE_NUMBER;//twilio phone number
 const msSID =process.env.MESSAGE_SERVICE_SID;//messaging services SID
-const to = process.env.MY_NUMBER;//personal phone for testing
 const movapi = process.env.MOVIE_KEY;//omdb API key
 const port = process.env.EXPRESS_PORT;
 const twilio = require("twilio")(
@@ -35,10 +32,6 @@ server.listen(port, () => {
   console.log("listening...");
 });
 
-//test server. Not needed unless issues arise
-//server.get('/test', (request, response) => {
-//  response.send("hi!!!!");
-//})
 //function takes inputed movie and returns object with imdb information in an array
 async function findMovie(mov, object) {
   return imdb.get(
@@ -93,19 +86,18 @@ server.post('/get-sms', (request, response) => {
   const state = request.session.step; //track response
   var movarr = []; //used to move array from promise
   //this if statement is needed when someone asks for multiple movies in one session. savedBody var will keep the old movie as well, so shifting the first item on the array off the savedBody will ensure only one item is in the array. Probably don't even need an array for this var, but don't want to deal with changing it.
-  //var cachedRequest = body.toString();
-  //console.log("CachedRequest", cachedRequest);
-  //if ()
-  //        var newCacheR = request.req.headers.cookie.split(';');
-  //        var newerCacheR = newCache[5].split('=');
-  //        var finalCacheR = newerCache[1];
-  //        console.log("final cache request", finalCacheR);
-  if (state == 1 && body == "Y" && request.session.cookie !== undefined){ 
+  //START IF FOR Y
+  console.log("REQUEST", request);
+  console.log("RESPONSE", response);
+  console.log("COOKIE REQUEST: ", request.session.cookie);
+  savedBody = request.session.movie || body;
+  console.log("Saved body here!", savedBody);
+  console.log("Saved State here!", state);
+  if (state == 1 && savedBody !== body){ 
     //if (savedBody.length != 1){
      // savedBody.shift();
     //}
     console.log("In Y if, cookie", savedBody);
-    savedBody = request.session.cookie;
     console.log("In Y if, cookie", savedBody);
     (findMovie(savedBody, movarr)).catch(console.log("catch error"))
     .then(res =>{
@@ -142,9 +134,10 @@ server.post('/get-sms', (request, response) => {
       return res;
     })
   }
+  //END IF FOR Y
   else
   {
-    console.log("in state 0");
+    console.log("starting request");
     (findMovie(body, movarr))
     .catch(err => {
       const twiml = new MessagingResponse();
@@ -158,19 +151,11 @@ server.post('/get-sms', (request, response) => {
       if (res[4] == "movie") {
         request.session.step = 1;
         //savedBody = [];
-        request.session.cookie = res[0];
-        console.log("REQUEST", request);
-
-          //var cachedResponse = body;
-          //console.log("CachedResponse", cachedResponse);
-          //console.log("response: ", response);
-          //response.cookie('cachedResponse', cachedResponse, { maxAge: 1000 * 60 * 60 });
-          //console.log ("response cookie", response.req.cookie);
-          //var newCache = response.req.headers.cookie.split(';');
-          //var newerCache = newCache[5].split('=');
-          //var finalCache = newerCache[1];
-          //console.log("final cache", finalCache);
-        //savedBody.push(res[0]);//savedBody does not need to be an array
+        console.log("cookie before change: " , request.session.cookie);
+        request.session.movie = res[0];
+        //console.log("REQUEST", request);
+        console.log("cookie: ", request.session.movie);
+        console.log("cookie after change: " , request.session.cookie);
         message = ('Looks like you want some info about the movie "' + res[0] + '." Here you go! \n\n'
           + res[0] + " released in " + res[2] + ".\n\nAwards: " + res[1] + "\n\nimdb currently scores it at " + res[3] + '/10.\n\nWant to learn more? Reply "Y"');
       } else if (res[4] == "series") {
