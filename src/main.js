@@ -91,6 +91,7 @@ server.post('/get-sms', (request, response) => {
   console.log("Saved body here!", savedBody);
   console.log("Saved State here!", state);
   if (state == 1 && savedBody !== body && (body == "Y" || "YES")){ 
+    console.log("second response: ", body);
     (findMovie(savedBody, movarr)).catch(console.log("catch error in savedBody findMovie Function"))
     .then(res =>{
         request.session.step = 2; //notify that they have already gotten two responses
