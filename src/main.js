@@ -90,7 +90,7 @@ server.post('/get-sms', (request, response) => {
   savedBody = request.session.movie || body;
   console.log("Saved body here!", savedBody);
   console.log("Saved State here!", state);
-  if (state == 1 && savedBody !== body && (body == "Y" || "YES")){ 
+  if (state == 1 && savedBody !== body && body == "Y"){ 
     console.log("second response: ", body);
     (findMovie(savedBody, movarr)).catch(console.log("catch error in savedBody findMovie Function"))
     .then(res =>{
