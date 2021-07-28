@@ -71,7 +71,7 @@ async function findMovie(mov, object) {
         object[10] = things.genres;
         object[11] = things.director;
         object[12] = things.imdburl;
-        object[13] = things.writers;
+        object[13] = things.writer;
       }
       return object;
     }
