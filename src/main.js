@@ -40,8 +40,7 @@ async function findMovie(mov, object) {
       return stats;
     })
     .catch("error!!!")
-    .then((things) => {
-      
+    .then((things) => {      
       if (things.type == "movie") {
         object[0] = (things.title);
         object[1] = (things.awards);
